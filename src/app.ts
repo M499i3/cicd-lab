@@ -21,3 +21,4 @@ export function buildApp(options: FastifyServerOptions = {}) {
 
   return app;
 }
+const _ciBreak: number = 'not-a-number';
