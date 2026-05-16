@@ -1,0 +1,56 @@
+name: CI b12705005
+
+on:
+  push:
+    branches:
+      - '**'
+
+permissions:
+  contents: read
+  checks: write
+
+concurrency:
+  group: ci-b12705005-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript typecheck
+        run: npm run typecheck
+
+      - name: Prettier check
+        run: npm run format:check
+
+      - name: Run tests
+        run: |
+          mkdir -p reports
+          npm test -- --reporter=default --reporter=junit --outputFile.junit=reports/vitest-junit.xml
+
+      - name: Publish test results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always() && !cancelled()
+        with:
+          files: reports/vitest-junit.xml
+          check_name: Vitest Test Results
+
+      - name: Upload test report artifact
+        if: always() && !cancelled()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report-b12705005
+          path: reports/
+          if-no-files-found: ignore
